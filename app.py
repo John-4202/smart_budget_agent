@@ -4,8 +4,10 @@ from pathlib import Path
 from datetime import date
 
 if st.sidebar.button("🗑️ 데이터 초기화"):
-    df = pd.DataFrame(columns=["date","type","category","amount","memo"])
-    save(df)
+    empty_df = pd.DataFrame(columns=["date","type","category","amount","memo"])
+    save(empty_df)
+
+    st.session_state["df"] = empty_df  # 세션에도 반영
     st.success("모든 데이터가 초기화되었습니다.")
     st.rerun()
 
