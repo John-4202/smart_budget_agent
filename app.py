@@ -3,6 +3,12 @@ import pandas as pd
 from pathlib import Path
 from datetime import date
 
+if st.sidebar.button("🗑️ 데이터 초기화"):
+    df = pd.DataFrame(columns=["date","type","category","amount","memo"])
+    save(df)
+    st.success("모든 데이터가 초기화되었습니다.")
+    st.rerun()
+
 st.set_page_config(page_title="Smart Budget Agent",page_icon="💰",layout="wide")
 DATA=Path("budget.csv")
 if not DATA.exists():
@@ -31,9 +37,42 @@ if menu=="입력":
             st.success("저장 완료")
 
 elif menu=="내역":
-    st.dataframe(df,use_container_width=True)
-    st.download_button("CSV 다운로드",df.to_csv(index=False),"budget.csv","text/csv")
+    st.dataframe(df, use_container_width=True)
+    st.download_button("CSV 다운로드", df.to_csv(index=False), "budget.csv", "text/csv")
 
+    st.subheader("✏️ 데이터 수정 / 삭제")
+
+    if len(df) > 0:
+        idx = st.selectbox("행 선택", df.index)
+
+        row = df.loc[idx]
+
+        d = st.date_input("날짜", pd.to_datetime(row["date"]))
+        t = st.selectbox("구분", ["수입","지출"], index=0 if row["type"]=="수입" else 1)
+        c = st.selectbox(
+            "카테고리",
+            ["급여","식비","교통","쇼핑","생활","문화","기타"],
+            index=["급여","식비","교통","쇼핑","생활","문화","기타"].index(row["category"])
+        )
+        a = st.number_input("금액", value=int(row["amount"]), step=1000)
+        m = st.text_input("메모", value=row["memo"])
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            if st.button("✏️ 수정 저장"):
+                df.loc[idx] = [d, t, c, a, m]
+                save(df)
+                st.success("수정 완료")
+                st.rerun()
+
+        with col2:
+            if st.button("🗑️ 선택 삭제"):
+                df = df.drop(idx)
+                save(df)
+                st.success("삭제 완료")
+                st.rerun()
+            
 elif menu=="대시보드":
     income=df[df.type=="수입"]["amount"].sum() if len(df) else 0
     expense=df[df.type=="지출"]["amount"].sum() if len(df) else 0
